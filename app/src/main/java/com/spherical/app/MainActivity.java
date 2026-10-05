@@ -3,6 +3,7 @@ package com.spherical.app;
 import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.net.Uri;
@@ -30,10 +31,12 @@ public class MainActivity extends Activity {
     private ValueCallback<Uri[]> fileCb;
     private String pendingMode;
     private boolean capLost;
+    private SharedPreferences prefs;
 
     @Override protected void onCreate(Bundle b) {
         super.onCreate(b);
-        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
+        prefs = getSharedPreferences(SphericalWidget.PREFS, MODE_PRIVATE);
+        applyOri(prefs.getInt("ori", 1));   // landscape by default; rotation can be enabled from the menu
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         if (Build.VERSION.SDK_INT >= 28) {
             getWindow().getAttributes().layoutInDisplayCutoutMode =
@@ -41,7 +44,7 @@ public class MainActivity extends Activity {
         }
         vib = (Vibrator) getSystemService(VIBRATOR_SERVICE);
         web = new WebView(this);
-        web.setBackgroundColor(0xFFDEDCCF);
+        web.setBackgroundColor(prefs.getInt("night", 0) == 1 ? 0xFF151410 : 0xFFE0DDCF);
         web.setOverScrollMode(View.OVER_SCROLL_NEVER);
         WebSettings s = web.getSettings();
         s.setJavaScriptEnabled(true);
@@ -67,10 +70,21 @@ public class MainActivity extends Activity {
         @JavascriptInterface public void haptic(int t) { buzz(t); }
         @JavascriptInterface public void capture(final String mode) { runOnUiThread(() -> startCapture(mode)); }
         @JavascriptInterface public void stopCapture() { cap.stop(); }
+        @JavascriptInterface public void orientation(final int m) {
+            prefs.edit().putInt("ori", m).apply();
+            runOnUiThread(() -> applyOri(m));
+        }
+        @JavascriptInterface public void theme(int night) { prefs.edit().putInt("night", night).apply(); }
         @JavascriptInterface public void widget(String json) {
             getSharedPreferences(SphericalWidget.PREFS, MODE_PRIVATE).edit().putString(SphericalWidget.KEY, json).apply();
             SphericalWidget.refreshAll(MainActivity.this);
         }
+    }
+
+    private void applyOri(int m) {
+        setRequestedOrientation(m == 0 ? ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR
+                : m == 2 ? ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT
+                : ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
     }
 
     private void buzz(int t) {
