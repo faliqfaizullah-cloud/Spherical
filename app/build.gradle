@@ -1,0 +1,39 @@
+plugins { id 'com.android.application' }
+
+// Release signing: the same key every build, so new APKs install over the old app (no uninstall).
+// CI provides KS_PATH / KS_PASS; local builds without them fall back to the debug key.
+def ksPath = System.getenv('KS_PATH')
+
+android {
+    namespace 'com.spherical.app'
+    compileSdk 34
+    defaultConfig {
+        applicationId 'com.spherical.app'
+        minSdk 24
+        targetSdk 34
+        // CI derives these from the release tag (v1.4.2 -> 10402, "1.4.2")
+        versionCode (project.findProperty('vc') ?: '1').toString().toInteger()
+        versionName (project.findProperty('vn') ?: '1.0.0').toString()
+    }
+    signingConfigs {
+        release {
+            if (ksPath) {
+                storeFile file(ksPath)
+                storeType 'PKCS12'
+                storePassword System.getenv('KS_PASS')
+                keyAlias 'spherical'
+                keyPassword System.getenv('KS_PASS')
+            }
+        }
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig(ksPath ? signingConfigs.release : signingConfigs.debug)
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}

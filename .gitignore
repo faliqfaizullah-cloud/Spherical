@@ -1,0 +1,8 @@
+.gradle/
+build/
+local.properties
+*.apk
+.idea/
+*.p12
+signing.txt
+app/src/main/assets/repo.txt
