@@ -46,7 +46,9 @@ jobs:
       - name: Build
         env:
           KS_PASS: ${{ secrets.KS_PASS }}
-        run: gradle assembleRelease --no-daemon -Pvc=${{ steps.v.outputs.vc }} -Pvn=${{ steps.v.outputs.vn }}
+        run: |
+          echo "version name=${{ steps.v.outputs.vn }} code=${{ steps.v.outputs.vc }} signed=${KS_PATH:+yes}"
+          gradle assembleRelease --no-daemon --stacktrace -Pvc="${{ steps.v.outputs.vc }}" -Pvn="${{ steps.v.outputs.vn }}"
 
       - run: cp app/build/outputs/apk/release/app-release.apk Spherical.apk
       - uses: actions/upload-artifact@v4
