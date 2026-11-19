@@ -14,6 +14,6 @@ git remote get-url origin >/dev/null 2>&1 || gh repo create spherical --public -
 # the signing key goes to GitHub as a private secret (never into the repo)
 base64 -w0 spherical-release.p12 | gh secret set KEYSTORE_B64
 gh secret set KS_PASS < signing.txt
-git push -u origin main
+git push -u -f origin main
 git tag -f "$TAG" && git push -f origin "$TAG"
 echo "Pushed $TAG. In ~5 min the APK appears under Releases, and installed copies offer the update in-app (menu > UPDATE)."
